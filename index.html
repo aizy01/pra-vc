@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raspadinha do Amor</title>
+  <style>
+    :root {
+      --bg-light: linear-gradient(to bottom, black, black);
+      --text-light: #d94a74;
+      --bg-dark: black;
+      --text-dark: #ff99aa;
+      --card-dark: #333;
+      --border-dark: #ff99aa;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg-light);
+      text-align: center;
+      padding: 30px;
+      margin: 0;
+      color: var(--text-light);
+      transition: background 0.4s, color 0.4s;
+    }
+
+    h1 {
+      color: var(--text-light);
+      transition: color 0.4s;
+    }
+
+    #heartGrid {
+      display: none;
+    }
+
+    .hearts {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
+      max-width: 500px;
+      margin: 30px auto;
+    }
+
+    .heart {
+      background: black;
+      border: 2px solid #c70039;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ff99aa;
+      font-weight: bold;
+      font-size: 1.2em;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .heart:hover {
+      transform: scale(1.1);
+    }
+
+    .scratched {
+      background-color: #c70039;
+      color: white;
+    }
+
+    #scratch-container {
+      margin-top: 20px;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    #messageWrapper {
+      position: relative;
+      width: 300px;
+      height: 150px;
+      background: black;
+      border: 2px solid #c70039;
+      border-radius: 15px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.4s, border 0.4s;
+    }
+
+    #messageBox {
+      z-index: 0;
+      font-size: 1.1em;
+      color: white;
+      padding: 15px;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      cursor: crosshair;
+    }
+
+    button {
+      margin: 10px 10px 0;
+      padding: 10px 20px;
+      background-color: #c70039;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.4s;
+    }
+
+    button:hover {
+      background-color: #a0002f;
+    }
+
+    .dark-mode {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    .dark-mode h1 {
+      color: var(--text-dark);
+    }
+
+    .dark-mode .heart {
+      background: #222;
+      color: var(--text-dark);
+      border-color: var(--text-dark);
+    }
+
+    .dark-mode .scratched {
+      background-color: #555;
+      color: white;
+    }
+
+    .dark-mode #messageWrapper {
+      background: var(--card-dark);
+      border-color: var(--border-dark);
+    }
+
+    .dark-mode #messageBox {
+      color: white;
+    }
+
+    footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      padding: 10px;
+      background: black;
+      color: #ff99aa;
+      font-size: 14px;
+      opacity: 0.8;
+      z-index: 99;
+    }
+  </style>
+</head>
+<body>
+  <h1>RASPADINHA DE AMOR</h1>
+  <button id="startBtn" onclick="iniciarRaspadinha()">Iniciar Raspadinha</button>
+  <div class="hearts" id="heartGrid"></div>
+
+  <div id="scratch-container">
+    <div id="messageWrapper">
+      <div id="messageBox"></div>
+      <canvas id="scratchCanvas" width="300" height="150"></canvas>
+    </div>
+    <button onclick="fecharRaspadinha()"><b>FECHAR</b></button>
+  </div>
+
+  <audio id="bgMusic" loop>
+    <source src="" type="audio/mpeg" />
+    Seu navegador não suporta áudio.
+  </audio>
+
+  <script>
+    const messages = {
+      1: "Quer um beijo meu? Toma. Eu adoro ver você assim.",
+      2: "Sabe, depois que eu te conheci ficou difícil de viver.",
+      3: "Me dá um beijo na boca toda vez que eu te fizer sorrir.",
+      4: "Quero partilhar a boa vida com você.",
+      5: "Diga pra mim que é real, que eu te prometo meu melhor.",
+      6: "E o amor impossível só foi ficando mais forte.",
+      7: "E eu vou te esperar aonde quer que eu vá",
+      8: "Eu vou te amar como um idiota ama.",
+      9: "Quando fico pensando em você Eu esqueço do mundo pra te ter.",
+      10: "Ninguém mais feliz que eu e você.",
+      11: "Essa eu fiz pro nosso amor.",
+      12: "Yo estoy enamorado por ti.",
+      13: "Cause you make the whole world disappear.",
+      14: "Amor da minha vida, daqui até a eternidade.",
+      15: "Quando a saudade apertar."
+    };
+
+    const audios = {
+      1: "Beijo.mp3",
+      2: "Pupila.mp3",
+      3: "Te_Encontrar.mp3",
+      4: "Partilhar.mp3",
+      5: "Lisboa.mp3",
+      6: "Vagabundo.mp3",
+      7: "Levocomigo.mp3",
+      8: "Idiota.mp3",
+      9: "Amor.mp3",
+      10: "Aliança.mp3",
+      11: "Essa.mp3",
+      12: "Enamorado1.mp3",
+      13: "Enamorado.mp3",
+      14: "Exagerado.mp3",
+      15: "Girassol.mp3"
+    };
+
+    const heartGrid = document.getElementById("heartGrid");
+    const scratchContainer = document.getElementById("scratch-container");
+    const messageBox = document.getElementById("messageBox");
+    const canvas = document.getElementById("scratchCanvas");
+    const ctx = canvas.getContext("2d");
+    const audio = document.getElementById("bgMusic");
+    let isDrawing = false;
+
+    function iniciarRaspadinha() {
+      document.getElementById('startBtn').style.display = 'none';
+      heartGrid.style.display = 'grid';
+    }
+
+    for (let i = 1; i <= 15; i++) {
+      const heart = document.createElement("div");
+      heart.className = "heart";
+      heart.textContent = i;
+      heart.dataset.index = i;
+      heart.onclick = () => showScratch(i, heart);
+      heartGrid.appendChild(heart);
+    }
+
+    function showScratch(num, heartElement) {
+      document.querySelectorAll('.heart').forEach(h => h.classList.remove('selected'));
+      heartElement.classList.add("scratched");
+      heartElement.classList.add("selected");
+      messageBox.textContent = messages[num];
+      scratchContainer.style.display = "flex";
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = "#d94a74";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (audios[num]) {
+        audio.src = audios[num];
+        audio.play();
+      }
+    }
+
+    function fecharRaspadinha() {
+      scratchContainer.style.display = "none";
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    canvas.addEventListener("mousedown", () => isDrawing = true);
+    canvas.addEventListener("mouseup", () => isDrawing = false);
+    canvas.addEventListener("mousemove", scratch);
+    canvas.addEventListener("touchstart", () => isDrawing = true);
+    canvas.addEventListener("touchend", () => isDrawing = false);
+    canvas.addEventListener("touchmove", scratch);
+
+    function scratch(e) {
+      if (!isDrawing) return;
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(x, y, 15, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  </script>
+  <footer>
+    © 2025 — Criado com carinho por @aizyxz
+  </footer>
+</body>
+</html>
